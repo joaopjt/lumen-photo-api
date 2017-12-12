@@ -14,3 +14,17 @@
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
+
+$router->post('login', [
+    'uses' => 'LoginController@makeLogin'
+]);
+
+$router->get('photos', [
+    'middleware' => 'auth', function() {
+
+      return response()->json([
+        '01' => 'blabla.jpg',
+        '02' => 'blabla.jpg'
+      ]);
+    }
+]);
