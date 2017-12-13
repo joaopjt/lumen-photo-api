@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 use App\User;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
     /**
      * Authenticate user and return a token validated.
      *
-     * @return void
+     * @return Illuminate\Http\Response
      */
     public function makeLogin(Request $req) {
         $this->validate($req, [
