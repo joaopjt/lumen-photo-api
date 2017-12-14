@@ -2,29 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Photo;
 use App\Albumn;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class AlbumnsController extends Controller
+class PhotosController extends Controller
 {
     /**
-     * List user albumns if authenticated
-     * and the public ones if not.
+     * List albumn photos
      *
      * @return Illuminate\Http\Response
      */
-    public function list(Request $req) {
+    public function list(Request $req, $albumnId) {
         if($req->hasHeader('authorization')) {
             Auth::check(); // Make the user authentication
 
-            $albumns = Albumn::where('owner_id', Auth::user()->id)->get();
+            $albumn = Albumn::find($albumnId);
 
-            return response()->json($albumns, 200);
+            if($albumn) {
+                if ($albumn->hasPrivilege(Auth::user()->id)) {
+                    return response()->json($albumn->photos(), 200);
+                }
+
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            return response()->json(['error' => 'Not found'], 404);
         } else {
-            $albumns = Albumn::where('public', 1)->get();
+            $albumn = Albumn::find($albumnId);
 
-            return response()->json($albumns, 200);
+            if($albumn) {
+                if($albumn->isPublic()) {
+                    $photos = $albumn->photos();
+
+                    return response()->json($photos, 200);
+                }
+
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            return response()->json(['error' => 'Not found'], 404);
         }
     }
 
