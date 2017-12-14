@@ -59,7 +59,7 @@ class AlbumnsController extends Controller
     public function add(Request $req) {
         $this->validate($req, [
             'name' => 'required|string',
-            'public' => 'nullable|integer'
+            'public' => 'nullable|boolean'
         ]);
 
         $albumn = new Albumn();
@@ -84,21 +84,19 @@ class AlbumnsController extends Controller
      */
     public function edit(Request $req, $albumnId) {
         $this->validate($req, [
-            'name' => 'nullable|string',
+            'name' => 'string',
             'public' => 'boolean'
         ]);
 
         $albumn = Albumn::find($albumnId);
 
         if($albumn) {
-            if ($albumn->owner_id == $req->user()->id) {
-                if ($req->input('name')) {
+            if ($req->user()->id == $albumn->owner_id) {
+                if ($req->has('name')) {
                     $albumn->name = $req->input('name');
                 }
 
-                var_dump($req->input('public'));
-
-                if (!empty($req->input('public'))) {
+                if ($req->has('public')) {
                     $albumn->public = $req->input('public');
                 }
 

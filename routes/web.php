@@ -29,7 +29,7 @@ $router->get('albumns/{id}', ['uses' => 'AlbumnsController@get']);
 $router->group(['middleware' => 'auth'], function () use ($router) {
 
   $router->post('albumns', ['uses' => 'AlbumnsController@add']);
-  $router->patch('albumns/{id}', ['uses' => 'AlbumnsController@edit']);
+  $router->put('albumns/{id}', ['uses' => 'AlbumnsController@edit']);
   $router->delete('albumns/{id}', ['uses' => 'AlbumnsController@remove']);
 
 });

@@ -2,7 +2,6 @@
 
 namespace App;
 
-use Photo;
 use Illuminate\Auth\Authenticatable;
 use Laravel\Lumen\Auth\Authorizable;
 use Illuminate\Database\Eloquent\Model;
@@ -15,9 +14,9 @@ class Albumn extends Model implements AuthenticatableContract, AuthorizableContr
 
     protected $table = 'albumns';
 
-    public $timestamps = true;
+    protected $guarded = ['owner_id'];
 
-    public function getAllPhotos($albumn_id) {
-      return Photos::where('albumn_id', $albumn_id)->get();
-    }
+    protected $fillable = ['name', 'public'];
+
+    public $timestamps = true;
 }
