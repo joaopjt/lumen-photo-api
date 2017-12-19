@@ -16,11 +16,13 @@ class AlbumnsController extends Controller
      */
     public function list(Request $req) {
         if($req->hasHeader('authorization')) {
-            Auth::check(); // Make the user authentication
+            if(Auth::check()) {
+                $albumns = Albumn::where('owner_id', Auth::user()->id)->get();
 
-            $albumns = Albumn::where('owner_id', Auth::user()->id)->get();
+                return response()->json($albumns, 200);
+            }
 
-            return response()->json($albumns, 200);
+            return response()->json(['error' => 'Authentication has failed.'], 401);
         } else {
             $albumns = Albumn::where('public', 1)->get();
 
@@ -40,7 +42,7 @@ class AlbumnsController extends Controller
             if($albumn->public) {
                 return response()->json($albumn, 200);
             } else {
-                if($req->user()->id == $albumn->owner_id) {
+                if($albumn->hasPrivilege($req->user()->id)) {
                     return response()->json($albumn, 200);
                 } else {
                     return response()->json(['error' => 'Unauthorized.'], 401);

@@ -17,8 +17,18 @@ class Photo extends Model implements AuthenticatableContract, AuthorizableContra
 
     public $timestamps = true;
 
+    public function hasPrivilege(int $userId)
+    {
+      return $userId == $this->owner_id;
+    }
+
+    public function isPublic()
+    {
+      return $this->public;
+    }
+
     public function albumn()
     {
-      return $this->belongsTo('App/User');
+      return $this->belongsTo('App\Albumn');
     }
 }

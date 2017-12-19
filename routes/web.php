@@ -34,5 +34,7 @@ $router->group(['middleware' => 'auth'], function () use ($router) {
 
 });
 
+$router->get('photos/{id}', ['uses' => 'PhotosController@get']);
+
 $router->get('albumns/{albumnId}/photos', ['uses' => 'PhotosController@list']);
 

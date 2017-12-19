@@ -27,6 +27,10 @@ class Albumn extends Model implements AuthenticatableContract, AuthorizableContr
     }
 
     public function photos() {
-      return $this->hasMany('App\Photo');
+      return $this->hasMany('App\Photo')->get();
+    }
+
+    public function publicPhotos() {
+      return $this->hasMany('App\Photo')->where('public', '1')->get();
     }
 }

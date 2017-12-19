@@ -16,27 +16,27 @@ class PhotosController extends Controller
      */
     public function list(Request $req, $albumnId) {
         if($req->hasHeader('authorization')) {
-            Auth::check(); // Make the user authentication
+            if(Auth::check()) {
+                $albumn = Albumn::find($albumnId);
 
-            $albumn = Albumn::find($albumnId);
+                if($albumn) {
+                    if ($albumn->hasPrivilege(Auth::user()->id)) {
+                        return response()->json($albumn->photos(), 200);
+                    }
 
-            if($albumn) {
-                if ($albumn->hasPrivilege(Auth::user()->id)) {
-                    return response()->json($albumn->photos(), 200);
+                    return response()->json(['error' => 'Unauthorized'], 401);
                 }
 
-                return response()->json(['error' => 'Unauthorized'], 401);
+                return response()->json(['error' => 'Not found'], 404);
             }
 
-            return response()->json(['error' => 'Not found'], 404);
+            return response()->json(['error' => 'Authentication has failed.'], 401);
         } else {
             $albumn = Albumn::find($albumnId);
 
             if($albumn) {
                 if($albumn->isPublic()) {
-                    $photos = $albumn->photos();
-
-                    return response()->json($photos, 200);
+                    return response()->json($albumn->publicPhotos(), 200);
                 }
 
                 return response()->json(['error' => 'Unauthorized'], 401);
@@ -47,26 +47,40 @@ class PhotosController extends Controller
     }
 
     /**
-     * Get a specific album
+     * Get a specific photo
      *
      * @return Illuminate\Http\Response
      */
-    public function get(Request $req, $albumnId) {
-        $albumn = Albumn::find($albumnId);
+    public function get(Request $req, $photoId) {
+        if($req->hasHeader('authorization')) {
+            if (Auth::check()) {
+                $photo = Photo::find($photoId);
 
-        if($albumn) {
-            if($albumn->public) {
-                return response()->json($albumn, 200);
-            } else {
-                if($req->user()->id == $albumn->owner_id) {
-                    return response()->json($albumn, 200);
-                } else {
-                    return response()->json(['error' => 'Unauthorized.'], 401);
+                if($photo) {
+                    if($photo->isPublic()) {
+                        return response()->json($photo, 200);
+                    } else {
+                        if($photo->hasPrivilege(Auth::user()->id)) {
+                            return response()->json($photo, 200);
+                        }
+
+                        return response()->json(['error' => 'Unauthorized.'], 401);
+                    }
                 }
-            }
-        }
 
-        return response()->json(['error' => 'Not found.'], 404);
+                return response()->json(['error' => 'Not found.'], 404);
+            } else {
+                return response()->json(['error' => 'Authentication has failed.'], 401);
+            }
+        } else {
+            $photo = Photo::find($photoId);
+
+            if($photo && $photo->isPublic()) {
+                return response()->json($photo, 200);
+            }
+
+            return response()->json(['error' => 'Unauthorized.'], 401);
+        }
     }
 
     /**
