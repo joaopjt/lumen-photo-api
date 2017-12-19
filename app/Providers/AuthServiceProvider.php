@@ -6,6 +6,7 @@ use App\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -35,13 +36,13 @@ class AuthServiceProvider extends ServiceProvider
             if ($req->hasHeader('authorization')) {
                 $token = explode(' ', $req->header('authorization'));
 
-                $user = User::where('api_key', $token[1])->first();
-
-                if($user->name) {
-                    return $user;
+                try {
+                    $user = User::where('api_key', $token[1])->firstOrFail();
+                } catch (ModelNotFoundException $e) {
+                    return null;
                 }
 
-                return null;
+                return $user;
             }
 
             return null;
