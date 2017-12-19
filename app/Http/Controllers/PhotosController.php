@@ -6,6 +6,8 @@ use App\Photo;
 use App\Albumn;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PhotosController extends Controller
 {
@@ -84,28 +86,42 @@ class PhotosController extends Controller
     }
 
     /**
-     * Add a new albumn
+     * Add a new photo to albumn
      *
      * @return Illuminate\Http\Response
      */
-    public function add(Request $req) {
+    public function add(Request $req, $albumnId) {
         $this->validate($req, [
             'name' => 'required|string',
+            'url' => 'required|string|active_url',
             'public' => 'nullable|boolean'
         ]);
 
-        $albumn = new Albumn();
+        try {
+            $albumn = Albumn::find($albumnId)->where('owner_id', $req->user()->id)->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Invalid or unexistent albumn',
+                'details' => $e->getMessage()
+            ], 400);
+        }
 
-        $albumn->name = $req->input('name');
-        $albumn->public = ($req->input('public')) ? $req->input('public') : 0;
-        $albumn->owner_id = $req->user()->id;
+        if ($albumn) {
+            $photo = new Photo();
 
-        $albumn->save();
+            $photo->name = $req->input('name');
+            $photo->url = $req->input('url');
+            $photo->public = ($req->input('public')) ? $req->input('public') : 0;
+            $photo->albumn_id = $albumn->id;
+            $photo->owner_id = $req->user()->id;
 
-        if ($albumn->id) {
-            return response()->json($albumn, 201);
-        } else {
-            return response()->json(['error' => 'Internal server error.'], 500);
+            $photo->save();
+
+            if ($photo->id) {
+                return response()->json($photo, 201);
+            } else {
+                return response()->json(['error' => 'Internal server error.'], 500);
+            }
         }
     }
 
