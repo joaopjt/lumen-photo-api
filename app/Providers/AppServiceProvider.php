@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Rules\ImageURL;
+use App\Rules\imageURL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Validator;
 
@@ -15,7 +15,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-      Validator::extend('imageURL');
+        $imageURLRule = new imageURL();
+         Validator::extend('imageURL', $imageURLRule->validate());
     }
 
 

@@ -93,7 +93,7 @@ class PhotosController extends Controller
     public function add(Request $req, $albumnId) {
         $this->validate($req, [
             'name' => 'required|string',
-            'url' => 'required|string|active_url',
+            'url' => 'required|string|active_url|imageURL',
             'public' => 'nullable|boolean'
         ]);
 
@@ -126,7 +126,7 @@ class PhotosController extends Controller
     }
 
     /**
-     * edit a specific albumn
+     * edit a specific albumn photo
      *
      * @return Illuminate\Http\Response
      */
