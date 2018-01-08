@@ -15,8 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $imageURLRule = new imageURL();
-         Validator::extend('imageURL', $imageURLRule->validate());
+        //
     }
 
 
