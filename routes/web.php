@@ -33,9 +33,12 @@ $router->group(['middleware' => 'auth'], function () use ($router) {
   $router->delete('albumns/{id}', ['uses' => 'AlbumnsController@remove']);
 
   $router->post('albumns/{albumnId}/photos', ['uses' => 'PhotosController@add']);
+  $router->put('albumns/{albumnId}/photos/{photoId}', ['uses' => 'PhotosController@edit']);
+  $router->delete('albumns/{albumnId}/photos/{photoId}', ['uses' => 'PhotosController@remove']);
 });
 
 $router->get('photos/{id}', ['uses' => 'PhotosController@get']);
 
 $router->get('albumns/{albumnId}/photos', ['uses' => 'PhotosController@list']);
+$router->get('albumns/{albumnId}/photos/{photoId}', ['uses' => 'PhotosController@get']);
 

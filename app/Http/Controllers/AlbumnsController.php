@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 class AlbumnsController extends Controller
 {
     /**
-     * List user albumns if authenticated
+     * List own user albumns if authenticated
      * and the public ones if not.
      *
      * @return Illuminate\Http\Response
@@ -21,13 +21,11 @@ class AlbumnsController extends Controller
 
                 return response()->json($albumns, 200);
             }
-
-            return response()->json(['error' => 'Authentication has failed.'], 401);
-        } else {
-            $albumns = Albumn::where('public', 1)->get();
-
-            return response()->json($albumns, 200);
         }
+
+        $albumns = Albumn::where('public', 1)->get();
+
+        return response()->json($albumns, 200);
     }
 
     /**
@@ -41,12 +39,17 @@ class AlbumnsController extends Controller
         if($albumn) {
             if($albumn->public) {
                 return response()->json($albumn, 200);
-            } else {
-                if($albumn->hasPrivilege($req->user()->id)) {
-                    return response()->json($albumn, 200);
-                } else {
-                    return response()->json(['error' => 'Unauthorized.'], 401);
+            }
+
+            if($req->hasHeader('authorization')) {
+                if(Auth::check()) {
+                    var_dump(Auth::user()->id);
+                    if($albumn->hasPrivilege(Auth::user()->id)) {
+                        return response()->json($albumn, 200);
+                    }
                 }
+
+                return response()->json(['error' => 'Unauthorized.'], 401);
             }
         }
 

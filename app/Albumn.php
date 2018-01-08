@@ -2,7 +2,7 @@
 
 namespace App;
 
-use Photo;
+use App\Photo;
 use Illuminate\Auth\Authenticatable;
 use Laravel\Lumen\Auth\Authorizable;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +24,21 @@ class Albumn extends Model implements AuthenticatableContract, AuthorizableContr
 
     public function isPublic() {
         return $this->public;
+    }
+
+    public function removePhoto(int $id) {
+        $photo = Photo::where('albumn_id', $this->id)
+            ->where('id', $id);
+
+        $photo->delete();
+
+        return $photo;
+    }
+
+    public function photo(int $id) {
+        $photo = $this->hasMany('App\Photo')->where('id', $id)->firstOrFail();
+
+        return $photo;
     }
 
     public function photos() {
