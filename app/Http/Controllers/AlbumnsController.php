@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Validator;
 use App\Albumn;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,17 +16,39 @@ class AlbumnsController extends Controller
      * @return Illuminate\Http\Response
      */
     public function list(Request $req) {
-        if($req->hasHeader('authorization')) {
-            if(Auth::check()) {
-                $albumns = Albumn::where('owner_id', Auth::user()->id)->get();
+        $validator = Validator::make($req->query(), [
+            'name' => 'string|nullable',
+            'limit' => 'integer|nullable',
+            'offset' => 'integer|nullable'
+        ]);
 
-                return response()->json($albumns, 200);
+        if($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        } else {
+            $query = new Albumn;
+
+            if($req->query('name')) {
+                $query = $query->where('name', 'like', '%' . $req->query('name') . '%');
             }
+
+            if($req->query('limit')) {
+                $query = $query->limit($req->query('limit'));
+            }
+
+            if($req->query('offset')) {
+                $query = $query->offset($req->query('offset'));
+            }
+
+            if($req->hasHeader('authorization') && Auth::check()) {
+                $query = $query->where('owner_id', Auth::user()->id);
+            } else {
+                $query = $query->where('public', true);
+            }
+
+            $albumns = Albumn::getAlbumns($query);
+
+            return response()->json($albumns['data'], $albumns['code']);
         }
-
-        $albumns = Albumn::where('public', 1)->get();
-
-        return response()->json($albumns, 200);
     }
 
     /**
@@ -43,7 +66,6 @@ class AlbumnsController extends Controller
 
             if($req->hasHeader('authorization')) {
                 if(Auth::check()) {
-                    var_dump(Auth::user()->id);
                     if($albumn->hasPrivilege(Auth::user()->id)) {
                         return response()->json($albumn, 200);
                     }
@@ -77,13 +99,13 @@ class AlbumnsController extends Controller
 
         if ($albumn->id) {
             return response()->json($albumn, 201);
-        } else {
-            return response()->json(['error' => 'Internal server error.'], 500);
         }
+
+        return response()->json(['error' => 'Internal server error.'], 500);
     }
 
     /**
-     * edit a specific albumn
+     * Edit a specific albumn
      *
      * @return Illuminate\Http\Response
      */
@@ -123,7 +145,7 @@ class AlbumnsController extends Controller
      */
     public function remove(Request $req, $albumnId) {
         // First, shoud verify if the authenticated user is the owner of the albumn.
-        // After, should delete all pictures in the albumn and only after
+        // After, we should delete all pictures in the albumn and only after
         // delete the album.
 
         $albumn = Albumn::find($albumnId);
