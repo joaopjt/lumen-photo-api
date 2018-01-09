@@ -44,16 +44,18 @@ class AlbumnsController extends Controller
                 $columns = $req->query('sort');
 
                 foreach(explode(',', $columns) as $column) {
-                    $sort = $column;
-                    $order = 'asc';
-                    $value = explode('-', $sort, 2);
+                    if($column) {
+                        $sort = $column;
+                        $order = 'asc';
+                        $value = explode('-', $sort, 2);
 
-                    if(count($value) == 2) {
-                        $sort = $value[1];
-                        $order = 'desc';
+                        if(count($value) == 2) {
+                            $sort = $value[1];
+                            $order = 'desc';
+                        }
+
+                        $query = $query->orderBy($sort, $order);
                     }
-
-                    $query = $query->orderBy($sort, $order);
                 }
             }
 
