@@ -35,7 +35,7 @@ class AlbumnsEndpoint extends TestCase
 
     public function test_Get_all_when_logged_in()
     {
-        $res = $this->client->request('GET', '/albumns', $this->authHeaders);
+        $res = $this->client->request('GET', '/albumns?sort=-public', $this->authHeaders);
 
         $this->assertEquals(200, $res->getStatusCode());
 
@@ -47,15 +47,25 @@ class AlbumnsEndpoint extends TestCase
         $this->assertEquals(false, $data['public']);
     }
 
+    public function test_Get_all_with_limit ()
+    {
+        $res = $this->client->request('GET', '/albumns?limit=2', $this->authHeaders);
+
+        $this->assertEquals(200, $res->getStatusCode());
+
+        $data = json_decode($res->getBody(), true);
+
+        $this->assertEquals(2, count($data));
+    }
+
+    /////////////////////////////////////////////
+    // In this first case, we simulate         //
+    // a user not logged in trying to post     //
+    // a new albumn. We should verify if       //
+    // the errors are being returned correctly //
+    /////////////////////////////////////////////
     public function test_Post_a_new_albumn_unlogged()
     {
-        /////////////////////////////////////////////
-        // In this first case, we simulate         //
-        // a user not logged in trying to post     //
-        // a new albumn. We should verify if       //
-        // the errors are being returned correctly //
-        /////////////////////////////////////////////
-
         try {
             $res = $this->client->request('POST', '/albumns');
         } catch (ClientException $e) {
@@ -63,12 +73,11 @@ class AlbumnsEndpoint extends TestCase
         }
     }
 
+    ////////////////////////////////////
+    // In this second case, we should //
+    // get a validation error         //
+    ////////////////////////////////////
     public function test_Post_a_new_albumn_logged_with_unvalid_payload() {
-        ////////////////////////////////////
-        // In this second case, we should //
-        // get a validation error         //
-        ////////////////////////////////////
-
         try {
             $res = $this->client->request('POST', '/albumns', array_merge($this->authHeaders, [
                 'json' => [
@@ -80,13 +89,12 @@ class AlbumnsEndpoint extends TestCase
         }
     }
 
+    ///////////////////////////////
+    // In this one, we should    //
+    // get a successful body     //
+    // with the new added albumn //
+    ///////////////////////////////
     public function test_Post_a_new_albumn_logged_with_valid_payload() {
-        ///////////////////////////////
-        // In this one, we should    //
-        // get a successful body     //
-        // with the new added albumn //
-        ///////////////////////////////
-
         $res = $this->client->request('POST', '/albumns', array_merge($this->authHeaders, [
             'json' => [
                 'name' => 'PHPUnit'
@@ -96,12 +104,30 @@ class AlbumnsEndpoint extends TestCase
         $this->assertEquals(201, $res->getStatusCode());
 
         $data = json_decode($res->getBody(), true);
-
-        $this->albumnId = $data['id'];
     }
 
-    public function test_Delete_the_added_albumn() {
-        $endpoint = "/albumns/{$this->albumnId}";
+    public function test_Edit_the_test_added_albumn_to_be_public() {
+        $albumns = $this->client->request('GET', '/albumns?name=PHPUnit', $this->authHeaders);
+        $albumns = json_decode($albumns->getBody(), true);
+
+        $endpoint = "/albumns/{$albumns[count($albumns) - 1]['id']}";
+        $res = $this->client->request('PUT', $endpoint, array_merge($this->authHeaders, [
+            'json' => [
+                'public' => true
+            ]
+        ]));
+
+        $data = json_decode($res->getBody(), true);
+
+        $this->assertEquals(200, $res->getStatusCode());
+        $this->assertEquals(1, $data['public']);
+    }
+
+    public function test_Delete_the_last_added_albumn() {
+        $albumns = $this->client->request('GET', '/albumns?name=PHPUnit', $this->authHeaders);
+        $albumns = json_decode($albumns->getBody(), true);
+
+        $endpoint = "/albumns/{$albumns[count($albumns) - 1]['id']}";
         $res = $this->client->request('DELETE', $endpoint, $this->authHeaders);
 
         $this->assertEquals(204, $res->getStatusCode());
