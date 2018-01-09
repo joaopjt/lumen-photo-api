@@ -41,16 +41,20 @@ class AlbumnsController extends Controller
             }
 
             if($req->query('sort')) {
-                $sort = $req->query('sort');
-                $order = 'asc';
-                $value = explode('-', $sort);
+                $columns = $req->query('sort');
 
-                if(count($value) == 2) {
-                    $sort = $value[1];
-                    $order = 'desc';
+                foreach(explode(',', $columns) as $column) {
+                    $sort = $column;
+                    $order = 'asc';
+                    $value = explode('-', $sort, 2);
+
+                    if(count($value) == 2) {
+                        $sort = $value[1];
+                        $order = 'desc';
+                    }
+
+                    $query = $query->orderBy($sort, $order);
                 }
-
-                $query = $query->orderBy($sort, $order);
             }
 
             if($req->hasHeader('authorization') && Auth::check()) {
