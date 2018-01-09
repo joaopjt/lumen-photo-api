@@ -19,7 +19,8 @@ class AlbumnsController extends Controller
         $validator = Validator::make($req->query(), [
             'name' => 'string|nullable',
             'limit' => 'integer|nullable',
-            'offset' => 'integer|nullable'
+            'offset' => 'integer|nullable',
+            'sort' => 'string|nullable'
         ]);
 
         if($validator->fails()) {
@@ -37,6 +38,19 @@ class AlbumnsController extends Controller
 
             if($req->query('offset')) {
                 $query = $query->offset($req->query('offset'));
+            }
+
+            if($req->query('sort')) {
+                $sort = $req->query('sort');
+                $order = 'asc';
+                $value = explode('-', $sort);
+
+                if(count($value) == 2) {
+                    $sort = $value[1];
+                    $order = 'desc';
+                }
+
+                $query = $query->orderBy($sort, $order);
             }
 
             if($req->hasHeader('authorization') && Auth::check()) {
