@@ -19,12 +19,11 @@ $router->post('login', [
     'uses' => 'LoginController@makeLogin'
 ]);
 
-/*
-* If has no `Authorization` header in those two routes above,
-* they should return the public defined albumn(s).
-*/
 $router->get('albumns', ['uses' => 'AlbumnsController@list']);
 $router->get('albumns/{id}', ['uses' => 'AlbumnsController@get']);
+
+$router->get('albumns/{albumnId}/photos', ['uses' => 'PhotosController@list']);
+$router->get('albumns/{albumnId}/photos/{photoId}', ['uses' => 'PhotosController@get']);
 
 $router->group(['middleware' => 'auth'], function () use ($router) {
 
@@ -36,9 +35,3 @@ $router->group(['middleware' => 'auth'], function () use ($router) {
   $router->put('albumns/{albumnId}/photos/{photoId}', ['uses' => 'PhotosController@edit']);
   $router->delete('albumns/{albumnId}/photos/{photoId}', ['uses' => 'PhotosController@remove']);
 });
-
-$router->get('photos/{id}', ['uses' => 'PhotosController@get']);
-
-$router->get('albumns/{albumnId}/photos', ['uses' => 'PhotosController@list']);
-$router->get('albumns/{albumnId}/photos/{photoId}', ['uses' => 'PhotosController@get']);
-

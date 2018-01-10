@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Validator;
 use App\Photo;
 use App\Albumn;
 use Illuminate\Http\Request;
@@ -17,35 +18,76 @@ class PhotosController extends Controller
      * @return Illuminate\Http\Response
      */
     public function list(Request $req, $albumnId) {
-        if($req->hasHeader('authorization')) {
-            if(Auth::check()) {
-                $albumn = Albumn::find($albumnId);
+        $validator = Validator::make($req->query(), [
+            'name' => 'string|nullable',
+            'url' => 'string|nullable',
+            'limit' => 'integer|nullable',
+            'offset' => 'integer|nullable',
+            'sort' => 'string|nullable'
+        ]);
 
-                if($albumn) {
-                    if ($albumn->hasPrivilege(Auth::user()->id)) {
-                        return response()->json($albumn->photos(), 200);
-                    }
-
-                    return response()->json(['error' => 'Unauthorized'], 401);
-                }
-
-                return response()->json(['error' => 'Not found'], 404);
-            }
-
-            return response()->json(['error' => 'Authentication has failed.'], 401);
+        if($validator->fails()) {
+            return response()->json($validator->errors(), 422);
         } else {
+            $query = new Photo;
             $albumn = Albumn::find($albumnId);
 
-            if($albumn) {
-                if($albumn->isPublic()) {
-                    return response()->json($albumn->publicPhotos(), 200);
-                }
+            if(!$albumn) {
+                return response()->json(['error' => 'Albumn not found'], 404);
+            }
 
+            if(!$albumn->isPublic()) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
 
-            return response()->json(['error' => 'Not found'], 404);
+            if($req->query('name')) {
+                $query = $query->where('name', 'like', '%' . $req->query('name') . '%');
+            }
+
+            if($req->query('url')) {
+                $query = $query->where('url', 'like', '%' . $req->query('url') . '%');
+            }
+
+            if($req->query('limit')) {
+                $query = $query->limit($req->query('limit'));
+            }
+
+            if($req->query('offset')) {
+                $query = $query->offset($req->query('offset'));
+            }
+
+            if($req->query('sort')) {
+                $columns = $req->query('sort');
+
+                foreach(explode(',', $columns) as $column) {
+                    if($column) {
+                        $sort = $column;
+                        $order = 'asc';
+                        $value = explode('-', $sort, 2);
+
+                        if(count($value) == 2) {
+                            $sort = $value[1];
+                            $order = 'desc';
+                        }
+
+                        $query = $query->orderBy($sort, $order);
+                    }
+                }
+            }
+
+            if($req->hasHeader('authorization') && Auth::check()) {
+                if(!$albumn->hasPrivilege(Auth::user()->id)) {
+                    $query = $query->where('public', 1);
+                }
+            } else {
+                $query = $query->where('public', 1);
+            }
+
+            $photos = Photo::getPhotos($query);
+
+            return response()->json($photos['data'], $photos['code']);
         }
+
     }
 
     /**

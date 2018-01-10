@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Exception;
 use Illuminate\Auth\Authenticatable;
 use Laravel\Lumen\Auth\Authorizable;
 use Illuminate\Database\Eloquent\Model;
@@ -30,5 +31,21 @@ class Photo extends Model implements AuthenticatableContract, AuthorizableContra
     public function albumn()
     {
       return $this->belongsTo('App\Albumn');
+    }
+
+    public static function getPhotos($query) {
+        $r = ['code' => 200];
+
+        try {
+            $r['data'] = $query->get()->all();
+        } catch(Exception $e) {
+            $r['code'] = 500;
+            $r['data'] = [
+                'error' => 'Internal server error',
+                'details' => $e->getMessage()
+            ];
+        }
+
+        return $r;
     }
 }
