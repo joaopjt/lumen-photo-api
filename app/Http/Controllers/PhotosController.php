@@ -164,31 +164,39 @@ class PhotosController extends Controller
         ]);
 
         try {
-            $albumn = Albumn::find($albumnId)->where('owner_id', $req->user()->id)->firstOrFail();
+            $albumn = Albumn::find($albumnId)->firstOrFail();
+
+            if ($albumn->owner_id !== $req->user()->id) {
+                return response('Unauthorized', 401);
+            }
         } catch (ModelNotFoundException $e) {
             return response()->json([
-                'error' => 'Invalid or unexistent albumn',
+                'error' => 'Invalid or unexistent albumn.',
                 'details' => $e->getMessage()
             ], 400);
         }
 
-        if ($albumn) {
-            $photo = new Photo();
+        $photo = new Photo();
 
-            $photo->name = $req->input('name');
-            $photo->url = $req->input('url');
-            $photo->public = ($req->input('public')) ? $req->input('public') : 0;
-            $photo->albumn_id = $albumn->id;
-            $photo->owner_id = $req->user()->id;
+        $photo->name = $req->input('name');
+        $photo->url = $req->input('url');
+        $photo->public = ($req->input('public')) ? $req->input('public') : 0;
+        $photo->albumn_id = $albumnId;
+        $photo->owner_id = $req->user()->id;
 
-            $photo->save();
-
-            if ($photo->id) {
-                return response()->json($photo, 201);
-            } else {
-                return response()->json(['error' => 'Internal server error.'], 500);
-            }
+        if ($photo->public && !$albumn->public) {
+            return response()->json(['error' => 'The image cannot be public.'], 422);
         }
+
+        $photo->save();
+
+        if ($photo->id) {
+            return response()->json($photo, 201);
+        } else {
+            return response()->json(['error' => 'Internal server error.'], 500);
+        }
+
+        return response()->json(['error' => 'Unexistent or not found Albumn']);
     }
 
     /**
